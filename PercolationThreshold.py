@@ -41,7 +41,7 @@ def BFS_with_path(grid):
 
 # --- Simulation parameters ---
 n = 100                   # Grid size
-n_reps = 100             # Number of trials per p
+n_reps = 1000             # Number of trials per p
 ps = np.linspace(0, 1, 50)
 percolation_probs = []
 percolation_stds = []
