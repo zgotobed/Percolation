@@ -1,51 +1,61 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from numba import njit, int32, boolean
 
-def BFS_with_path(grid):
+# --- Optimized BFS function with numba ---
+@njit(boolean(int32[:, :]))
+def BFS_numba(grid):
     n = grid.shape[0]
-    visited = np.zeros_like(grid, dtype=bool)
-    queue = []
-    came_from = {}
+    visited = np.zeros((n, n), dtype=boolean)
+
+    queue = np.empty((n * n, 2), dtype=int32)  # Preallocate queue
+    head = 0
+    tail = 0
+
+    # Initialize queue with bottom row
+    for j in range(n):
+        if grid[n - 1, j] == 0:
+            queue[tail, 0] = n - 1
+            queue[tail, 1] = j
+            tail += 1
+            visited[n - 1, j] = True
+
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    for j in range(n):
-        if grid[n-1, j] == 0:
-            queue.append((n-1, j))
-            visited[n-1, j] = True
-            came_from[(n-1, j)] = None
-
-    while queue:
-        i, j = queue.pop(0)
+    while head < tail:
+        i, j = queue[head]
+        head += 1
         if i == 0:
-            return True, []
-        for di, dj in directions:
-            ni, nj = i + di, j + dj
+            return True
+
+        for d in directions:
+            ni, nj = i + d[0], j + d[1]
             if 0 <= ni < n and 0 <= nj < n:
                 if grid[ni, nj] == 0 and not visited[ni, nj]:
                     visited[ni, nj] = True
-                    queue.append((ni, nj))
-                    came_from[(ni, nj)] = (i, j)
+                    queue[tail, 0] = ni
+                    queue[tail, 1] = nj
+                    tail += 1
 
-    return False, []
+    return False
 
 # --- Parameters ---
-grid_sizes = [10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]      # Grid sizes to sweep
-ps = np.linspace(0, 1, 50)               # Vacancy probabilities
-n_reps = 100                             # Trials per configuration
+grid_sizes = [10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+ps = np.linspace(0, 1, 50)
+n_reps = 100
 
-# --- Storage for results ---
-results = np.zeros((len(grid_sizes), len(ps)))  # percolation probability
+results = np.zeros((len(grid_sizes), len(ps)))
 
 # --- Run simulations ---
 for i, n in enumerate(tqdm(grid_sizes, desc="Grid sizes")):
     for j, p in enumerate(tqdm(ps, desc=f"p sweep (n={n})", leave=False)):
-        outcomes = []
+        count = 0
         for _ in range(n_reps):
-            grid = (np.random.rand(n, n) >= p).astype(int)
-            percolates, _ = BFS_with_path(grid)
-            outcomes.append(1 if percolates else 0)
-        results[i, j] = np.mean(outcomes)
+            grid = (np.random.rand(n, n) >= p).astype(np.int32)
+            if BFS_numba(grid):
+                count += 1
+        results[i, j] = count / n_reps
 
 # --- Plot heatmap ---
 plt.figure(figsize=(10, 6))
