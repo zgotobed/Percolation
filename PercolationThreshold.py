@@ -49,7 +49,7 @@ def estimate_percolation_probability(n, p, n_reps):
     return count / n_reps
 
 # --- Parameters ---
-n_min, n_max, n_steps = 10, 200, 10
+n_min, n_max, n_steps = 10, 50, 10
 grid_sizes = np.linspace(n_min, n_max, n_steps).astype(int) #Grid sizes to test
 
 ps = np.linspace(0, 1, 200) #test 50 probabilities between 0 and 1
