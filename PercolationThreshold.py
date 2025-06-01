@@ -11,7 +11,8 @@ def BFS_with_path(grid):
     visited = np.zeros_like(grid, dtype=bool)
     queue = []
     came_from = {}
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # up, down, left, right
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # up, down, left, right. Note the backwards convention since
+    #(i,j) --> (i-1,j) represents a movement "up" in the grid profile
 
     for j in range(n):
         if grid[n-1, j] == 0:
@@ -41,7 +42,7 @@ def BFS_with_path(grid):
 
 # --- Simulation parameters ---
 n = 100                   # Grid size
-n_reps = 1000             # Number of trials per p
+n_reps = 100             # Number of trials per p
 ps = np.linspace(0, 1, 50)
 percolation_probs = []
 percolation_stds = []

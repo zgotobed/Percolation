@@ -75,7 +75,7 @@ def BFS_with_path(grid):
 
 #Okay let's actually use the code now
 # Set up parameters and grid
-n = 200
+n = 100
 p = 0.65
 grid = np.zeros((n, n))
 for i in range(n):
@@ -107,7 +107,3 @@ else:
     plt.title("Does Not Percolate")
 
 plt.show()
-# TODO: Initialize all sites as blocked. Then, Repeat the following until the systme percolates:
-#       - choose a site at random among all blocked sites
-#       - open the site
-#  The fraction of sites that are opened when the system percolates provides an estimate of the percolation threshold. 
