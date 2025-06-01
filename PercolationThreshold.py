@@ -1,19 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from numba import njit, int32, boolean
+from numba import njit, prange, int32, boolean
 
-# --- Optimized BFS function with numba ---
+# --- Optimized BFS using Numba ---
 @njit(boolean(int32[:, :]))
 def BFS_numba(grid):
     n = grid.shape[0]
     visited = np.zeros((n, n), dtype=boolean)
-
-    queue = np.empty((n * n, 2), dtype=int32)  # Preallocate queue
+    queue = np.empty((n * n, 2), dtype=int32)
     head = 0
     tail = 0
 
-    # Initialize queue with bottom row
     for j in range(n):
         if grid[n - 1, j] == 0:
             queue[tail, 0] = n - 1
@@ -40,22 +38,33 @@ def BFS_numba(grid):
 
     return False
 
-# --- Parameters ---
-grid_sizes = [10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
-ps = np.linspace(0, 1, 50)
-n_reps = 100
+# --- Parallelized percolation estimator ---
+@njit(parallel=True)
+def estimate_percolation_probability(n, p, n_reps):
+    count = 0
+    for _ in prange(n_reps):
+        grid = (np.random.rand(n, n) >= p).astype(np.int32)
+        if BFS_numba(grid):
+            count += 1
+    return count / n_reps
 
-results = np.zeros((len(grid_sizes), len(ps)))
+# --- Parameters ---
+n_min, n_max, n_steps = 10, 1000, 100
+grid_sizes = np.linspace(n_min, n_max, n_steps).astype(int) #Grid sizes to test
+
+ps = np.linspace(0, 1, 50) #test 50 probabilities between 0 and 1
+n_reps = 100 #Number of trials used for each grid size in order to ensure statistics
+
+results = np.zeros((len(grid_sizes), len(ps))) #Keep track of stuff for plotting later
+
+# --- Warm-up to trigger compilation before tqdm --- (shoutout to chatGPT for this suggestion)
+_ = BFS_numba(np.zeros((10, 10), dtype=np.int32))
+_ = estimate_percolation_probability(10, 0.5, 1)
 
 # --- Run simulations ---
 for i, n in enumerate(tqdm(grid_sizes, desc="Grid sizes")):
     for j, p in enumerate(tqdm(ps, desc=f"p sweep (n={n})", leave=False)):
-        count = 0
-        for _ in range(n_reps):
-            grid = (np.random.rand(n, n) >= p).astype(np.int32)
-            if BFS_numba(grid):
-                count += 1
-        results[i, j] = count / n_reps
+        results[i, j] = estimate_percolation_probability(n, p, n_reps)
 
 # --- Plot heatmap ---
 plt.figure(figsize=(10, 6))
