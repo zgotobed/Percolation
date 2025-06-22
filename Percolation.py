@@ -75,8 +75,8 @@ def BFS_with_path(grid):
 
 #Okay let's actually use the code now
 # Set up parameters and grid
-n = 100
-p = 0.65
+n = 50
+p = 0.8
 grid = np.zeros((n, n))
 for i in range(n):
     for j in range(n):
