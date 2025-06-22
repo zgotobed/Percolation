@@ -76,7 +76,7 @@ def BFS_with_path(grid):
 #Okay let's actually use the code now
 # Set up parameters and grid
 n = int(input("What is your desired grid size (n by n)? "))
-p = float(input("What is your desired vacancy probability? (between 0 and 1 inclusive) "))
+p = float(input("What is your desired vacancy probability? (0,1] "))
 
 grid = np.zeros((n, n))
 for i in range(n):

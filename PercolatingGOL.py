@@ -7,12 +7,13 @@
 #First step is to copy paste the relevant code from the Percolation.py script and the GameOfLife.py script.
 
 
-
-##### Percolation ##### 
-
+##### Imports #####
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import matplotlib.animation as animation
+
+##### Percolation ##### 
 
 def BFS_with_path(grid):
     '''
@@ -58,20 +59,27 @@ def BFS_with_path(grid):
 
 
 #Okay let's actually use the code now
-# Set up parameters and grid
+#Set up parameters and grid
+percolates = False
 n = int(input("What is your desired grid size (n by n)? "))
-p = float(input("What is your desired vacancy probability? (between 0 and 1 inclusive) "))
+p = float(input("What is your desired vacancy probability? (0,1] "))
+num_tries = 1
 
-grid = np.zeros((n, n))
-for i in range(n):
-    for j in range(n):
-        grid[i][j] = 0 if random.random() < p else 1
+while not percolates:
+    #Generate grids and check for percolation until we find one.
+    grid = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            grid[i][j] = 0 if random.random() < p else 1
 
-# Run BFS with path tracking
-percolates, path = BFS_with_path(grid)
-print("Percolates?", percolates)
+    # Run BFS with path tracking
+    percolates, path = BFS_with_path(grid)
+    num_tries +=1
+    print(f'Graph did not percolate. Moving to attempt number {num_tries}') #Purely for my own entertainment :)
 
-# Plot with gridlines and blue path highlights
+print(f"Percolating grid found on attempt number {num_tries}. Visulaizing now.")
+#Only move on to visualization if we have a plot that percolates
+# Plot with gridlines
 fig, ax = plt.subplots(figsize=(8, 8))
 ax.imshow(grid, cmap='binary', origin='upper')
 
@@ -81,23 +89,15 @@ ax.set_yticks(np.arange(-0.5, n, 1), minor=True)
 ax.grid(which='minor', color='gray', linestyle='-', linewidth=0.5)
 ax.tick_params(which='both', bottom=False, left=False, labelbottom=False, labelleft=False)
 
-# Highlight percolation path in blue
-if percolates:
-    for (i, j) in path:
-        rect = plt.Rectangle((j - 0.5, i - 0.5), 1, 1, color='blue', alpha=0.6)
-        ax.add_patch(rect)
-
-    plt.title("Percolates! Path Highlighted in Blue")
-else:
-    plt.title("Does Not Percolate")
-
+#Title and show
+plt.title("Percolating Graph")
 plt.show()
 
 
+##### Game of Life #####
 
-#Game of life, now. I think I'm just gonna rewrite it from scratch using the PyGame code I wrote as a skeleton.
 
-def Updategrid(grid,size):
+def Updategrid(grid):
     '''
     This function will update the current graph according to the following rules
     1. Any live cell with fewer than 2 live neighbors dies
@@ -108,24 +108,45 @@ def Updategrid(grid,size):
     TODO: Update this to the correct syntax. The current syntax is from the PyGame code I wrote a while back.
     '''
 
-    updated_grid = np.zeros((grid.shape[0],grid.shape[1]))
+    updated_grid = np.zeros((grid.shape[0],grid.shape[1])) #Create a blank canvas for our updated grid
 
     for row,col in np.ndindex(grid.shape):
-        alive = np.sum(grid[row-1:row+2,col-1:col+2])-grid[row,col]
-        color = color_bg if grid[row,col] == 0 else color_alive_next
+        alive = np.sum(grid[row-1:row+2,col-1:col+2])-grid[row,col] #Calculate how many neighbors we have
 
-        if grid[row,col] == 1:
-            if alive<2 or alive >3:
-                if with_progress:
-                    color = color_die_next
+        if grid[row,col] == 1: #If the cell is occupied
+            if alive<2 or alive >3: #And if the cell meets the dying criterion (1 and 3)
+                updated_grid[row,col] == 0 #Kill the cell
 
-            elif 2<= alive <=3:
-                updated_grid[row,col]=1
-                if with_progress:
-                    color = color_alive_next
+            elif 2<= alive <=3: #If the cell is occupied and meets the criterion for surviving (2)
+                updated_grid[row,col]=1 #Keep it alive
 
-        else:
-            if alive==3:
-                updated_grid[row,col]=1
-                if with_progress:
-                    color = color_alive_next
+        else: #If the cell is unoccupied
+            if alive==3: #If the cell has exactly three neighbors
+                updated_grid[row,col]=1 #Bring that cell to life (4)
+
+    return updated_grid
+
+
+iterations = 100 #Calculate 100 time steps into the future
+counter = 0 #Keep track of how many timesteps we have done
+
+while counter < iterations:
+    #Perform the game of life.
+    print(f"Running. Iteration number {counter}")
+    updated = Updategrid(grid) #update the percolating grid
+    counter +=1
+
+
+#Sanity check
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.imshow(updated, cmap='binary', origin='upper')
+
+# Draw gridlines
+ax.set_xticks(np.arange(-0.5, n, 1), minor=True)
+ax.set_yticks(np.arange(-0.5, n, 1), minor=True)
+ax.grid(which='minor', color='gray', linestyle='-', linewidth=0.5)
+ax.tick_params(which='both', bottom=False, left=False, labelbottom=False, labelleft=False)
+
+#Title and show
+plt.title(f"Percolating Graph after {iterations} iterations of the Game of Life")
+plt.show()
