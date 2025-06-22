@@ -1,39 +1,22 @@
-# The problem statement is as follows: 
-# We model a percolation system using an n-by-n grid of sites. Each site is either open or blocked. 
-# A full site is an open site that can be connected to an open site in the top row via a chain of 
-# neighboring (left, right, up, down) open sites. We say the system percolates if there is a full site in the bottom 
-# row. In other words, a system percolates if we fill all open sites connected to the top row and that process fills 
-# some open site on the bottom row
+#This python script will generate a random n x n grid with a set vacancy probability and check if it percolates (that
+#is, it will check if there is a sequence of "simple" moves from any open cell in the bottom row to any open cell
+#in the top row). Then, it will take the CLOSED grid and perform Conway's Game of Life on it.
 
-# In a famous scientific problem, researchers are interested in the following question: if sites are independently 
-# set to be open with probability p (and therefore blocked with probability 1 − p), what is the probability that the 
-# system percolates? When p equals 0, the system does not percolate; when p equals 1, the system percolates. 
-# When n is sufficiently large, there is a threshold value p* such that when p < p* a random n-by-n grid almost 
-# never percolates, and when p > p*, a random n-by-n grid almost always percolates. No mathematical solution for 
-# determining the percolation threshold p* has yet been derived.
+#I don't think that there will be any interesting results here, but I'd like to just test it first
+
+#First step is to copy paste the relevant code from the Percolation.py script and the GameOfLife.py script.
 
 
-# What is the first step? Let's first create an n by n grid which has each square being blocked w a probability p
+
+##### Percolation ##### 
 
 import numpy as np
-import random
 import matplotlib.pyplot as plt
+import random
 
 def BFS_with_path(grid):
     '''
-    General concept:
-    -Start at a cell in the bottom row
-    -Check to see if the cells to the left, right, up, and down are open
-    -If so, priority is given to moving straight up, put the moves L,R, and D (if applicable) into a queue
-    -After moving straight up, we repeat the process and add other moves further down the queue
-    -Repeat this along one path until we get stuck (the only accpeted move is the opposite of the move we just did)
-    -Go back to the most recent entry in the queue and repeat. Work backwards through the queue
-    -If all surrounding cells have been visited then we need to toss that cell from the queue, since we have already explored all possible options
-
-    Edge cases:
-    -D is not an acceptable move on the first repitition
-    -Handle when the current cell is on the edge of the board
-    -Queue removal when a cell is surrounded by cells that have already been visited
+    Documentation of this function can be found in the file called "Percolation.py". This is a so called "breadth-first search" algorithm.
     '''
     n = grid.shape[0]
     visited = np.zeros_like(grid, dtype=bool)
@@ -43,7 +26,7 @@ def BFS_with_path(grid):
     # Direction vectors: up, down, left, right
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    # Start from all open cells in the bottom row
+    # Start from all open grid in the bottom row
     for j in range(n):
         if grid[n-1, j] == 0:
             queue.append((n-1, j))
@@ -72,6 +55,7 @@ def BFS_with_path(grid):
                     came_from[(ni, nj)] = (i, j)
 
     return False, []
+
 
 #Okay let's actually use the code now
 # Set up parameters and grid
@@ -108,3 +92,40 @@ else:
     plt.title("Does Not Percolate")
 
 plt.show()
+
+
+
+#Game of life, now. I think I'm just gonna rewrite it from scratch using the PyGame code I wrote as a skeleton.
+
+def Updategrid(grid,size):
+    '''
+    This function will update the current graph according to the following rules
+    1. Any live cell with fewer than 2 live neighbors dies
+    2. Any live cell with two or three neighbors lives unchanged
+    3. Any live cell with more than three neighbors dies
+    4. Any dead cell with exactly three live neighbors becomes alive
+
+    TODO: Update this to the correct syntax. The current syntax is from the PyGame code I wrote a while back.
+    '''
+
+    updated_grid = np.zeros((grid.shape[0],grid.shape[1]))
+
+    for row,col in np.ndindex(grid.shape):
+        alive = np.sum(grid[row-1:row+2,col-1:col+2])-grid[row,col]
+        color = color_bg if grid[row,col] == 0 else color_alive_next
+
+        if grid[row,col] == 1:
+            if alive<2 or alive >3:
+                if with_progress:
+                    color = color_die_next
+
+            elif 2<= alive <=3:
+                updated_grid[row,col]=1
+                if with_progress:
+                    color = color_alive_next
+
+        else:
+            if alive==3:
+                updated_grid[row,col]=1
+                if with_progress:
+                    color = color_alive_next
